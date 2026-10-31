@@ -1,0 +1,117 @@
+[
+{
+"name": "Garage (2-3 cars)",
+"x": 5.5,
+"y": 8.5
+},
+{
+"name": "Foyer / Entry",
+"x": 12.5,
+"y": 8.5
+},
+{
+"name": "Powder",
+"x": 16.5,
+"y": 6.5
+},
+{
+"name": "Hall",
+"x": 16.5,
+"y": 10.0
+},
+{
+"name": "Bedroom 5 (guest)",
+"x": 20.5,
+"y": 8.5
+},
+{
+"name": "Laundry",
+"x": 4.5,
+"y": 13.25
+},
+{
+"name": "Maid's room + bath",
+"x": 4.5,
+"y": 16.25
+},
+{
+"name": "Home office",
+"x": 4.5,
+"y": 19.75
+},
+{
+"name": "Gym",
+"x": 4.5,
+"y": 23.25
+},
+{
+"name": "Gallery W",
+"x": 8.5,
+"y": 18.5
+},
+{
+"name": "Gallery E",
+"x": 16.5,
+"y": 18.5
+},
+{
+"name": "Bedroom 2",
+"x": 20.5,
+"y": 14.25
+},
+{
+"name": "Bedroom 3",
+"x": 20.5,
+"y": 18.75
+},
+{
+"name": "Bedroom 4",
+"x": 20.5,
+"y": 23.0
+},
+{
+"name": "Back kitchen + storage",
+"x": 4.5,
+"y": 27.0
+},
+{
+"name": "Home theater",
+"x": 4.5,
+"y": 31.5
+},
+{
+"name": "Entertaining kitchen",
+"x": 9.5,
+"y": 29.5
+},
+{
+"name": "Living / Dining",
+"x": 14.5,
+"y": 29.5
+},
+{
+"name": "Master bath + WIR",
+"x": 20.5,
+"y": 26.5
+},
+{
+"name": "Master bedroom",
+"x": 20.5,
+"y": 31.0
+},
+{
+"name": "Front gate",
+"x": 12.5,
+"y": -1.5
+},
+{
+"name": "Courtyard",
+"x": 12.5,
+"y": 16
+},
+{
+"name": "Pool terrace",
+"x": 13,
+"y": 35
+}
+]

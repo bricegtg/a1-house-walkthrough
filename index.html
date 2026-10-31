@@ -1,0 +1,83 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>A1 White Courtyard Pavilion - Walkthrough</title>
+<style>html,body{margin:0;height:100%;overflow:hidden;background:#cfe3f0;font-family:system-ui,sans-serif}
+#ui{position:fixed;top:8px;left:8px;z-index:5;display:flex;gap:6px;flex-wrap:wrap}
+#ui select,#ui button{font-size:14px;padding:6px 8px;border-radius:8px;border:1px solid #888;background:#fffe}
+#help{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);background:#000a;color:#fff;padding:6px 12px;border-radius:8px;font-size:12px;z-index:5;text-align:center}
+#load{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;background:#cfe3f0;z-index:9}
+#plan{display:none;position:fixed;inset:50px 10px 10px 10px;z-index:8;background:#fff;border-radius:10px;overflow:auto;text-align:center}
+#plan img{max-width:100%;max-height:100%}
+#joy{position:fixed;left:24px;bottom:50px;width:120px;height:120px;border-radius:50%;background:#fff3;border:2px solid #fff8;z-index:6;display:none;touch-action:none}
+#knob{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:#fffc}
+#room{position:fixed;top:8px;right:8px;background:#000a;color:#fff;padding:6px 10px;border-radius:8px;font-size:13px;z-index:5}
+</style></head><body>
+<div id="load">Loading house model…</div>
+<div id="ui"><select id="tp"><option value="">Go to room…</option></select><button id="pb">Floor plan</button><button id="fly">Bird's-eye</button></div>
+<div id="room"></div>
+<div id="plan" onclick="this.style.display='none'"><img src="plan.jpg"></div>
+<div id="joy"><div id="knob"></div></div>
+<div id="help"></div>
+<script type="importmap">{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const touch=matchMedia('(pointer:coarse)').matches;
+document.getElementById('help').textContent=touch?'Left pad: walk · drag right side: look · double-tap floor: jump there':'Click to look around · WASD/arrows walk · Shift run · double-click floor to jump there · Esc to release';
+const R=new THREE.WebGLRenderer({antialias:true}); R.setPixelRatio(Math.min(devicePixelRatio,2)); R.setSize(innerWidth,innerHeight);
+R.outputColorSpace=THREE.SRGBColorSpace; R.toneMapping=THREE.ACESFilmicToneMapping; R.toneMappingExposure=1.0; R.shadowMap.enabled=!touch; document.body.appendChild(R.domElement);
+const S=new THREE.Scene(); S.background=new THREE.Color(0xbfd9ee); S.fog=new THREE.Fog(0xbfd9ee,60,220);
+const C=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.05,500);
+S.add(new THREE.HemisphereLight(0xffffff,0x6b7a4a,1.6));
+const sun=new THREE.DirectionalLight(0xfff0dd,2.2); sun.position.set(-25,30,20); sun.castShadow=true; sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-35,right:35,top:35,bottom:-35,far:120}); sun.target.position.set(12,0,-20); S.add(sun,sun.target);
+const solids=[], floors=[]; let yaw=0,pitch=0; const P=new THREE.Vector3(12.5,0,1.5); let eye=1.6, feet=0;
+const b2t=(x,y)=>new THREE.Vector3(x,0,-y);
+new GLTFLoader().load('house.glb',g=>{
+  g.scene.traverse(o=>{ if(!o.isMesh) return; const n=(o.name+' '+(o.parent?o.parent.name:''));
+    o.castShadow=o.receiveShadow=true;
+    if(/INV_/.test(n)){o.visible=false; solids.push(o); return;}
+    if(/COL_/.test(n)) solids.push(o);
+    if(o.material&&o.material.name==='glass'){o.material.transparent=true;o.material.opacity=0.22;o.material.depthWrite=false;o.castShadow=false}
+    else floors.push(o);
+  });
+  S.add(g.scene); document.getElementById('load').remove(); spawn(12.5,-2.5,0); });
+const rooms=await (await fetch('rooms.json')).json(); const tp=document.getElementById('tp');
+rooms.forEach((r,i)=>{const o=document.createElement('option');o.value=i;o.textContent=r.name;tp.appendChild(o)});
+function spawn(x,y,yw){P.copy(b2t(x,y)); P.y=5; feet=ground(P)??0; yaw=yw; pitch=0; birds=false}
+tp.onchange=()=>{const r=rooms[tp.value]; if(r) spawn(r.x,r.y,0); tp.blur(); tp.value=''};
+document.getElementById('pb').onclick=()=>document.getElementById('plan').style.display='block';
+let birds=false; document.getElementById('fly').onclick=()=>{birds=!birds};
+const rc=new THREE.Raycaster();
+function ground(p){rc.set(new THREE.Vector3(p.x,feet+1.0,p.z),new THREE.Vector3(0,-1,0)); rc.far=6; const h=rc.intersectObjects(floors,false); return h.length?h[0].point.y:null}
+function blocked(from,dir,dist){for(const hh of [0.45,1.2]){rc.set(new THREE.Vector3(from.x,feet+hh,from.z),dir); rc.far=dist+0.3; if(rc.intersectObjects(solids,false).length) return true} return false}
+const keys={}; addEventListener('keydown',e=>keys[e.code]=true); addEventListener('keyup',e=>keys[e.code]=false);
+const cv=R.domElement;
+cv.addEventListener('click',()=>{if(!touch&&!birds) cv.requestPointerLock()});
+addEventListener('mousemove',e=>{if(document.pointerLockElement===cv){yaw-=e.movementX*0.0025; pitch=Math.max(-1.4,Math.min(1.4,pitch-e.movementY*0.0025))}});
+function teleportAt(cx,cy){const m=new THREE.Vector2(cx/innerWidth*2-1,-(cy/innerHeight)*2+1); rc.setFromCamera(m,C); rc.far=200; const h=rc.intersectObjects(floors,false)[0];
+  if(h&&h.face&&h.face.normal.y>0.5){P.x=h.point.x;P.z=h.point.z;feet=h.point.y;birds=false}}
+cv.addEventListener('dblclick',e=>{if(document.pointerLockElement) document.exitPointerLock(); teleportAt(e.clientX,e.clientY)});
+// touch
+let joy={x:0,y:0},look=null,lastTap=0; const J=document.getElementById('joy'),K=document.getElementById('knob'); if(touch) J.style.display='block';
+J.addEventListener('touchmove',e=>{e.preventDefault();const t=e.targetTouches[0],r=J.getBoundingClientRect();let dx=(t.clientX-r.left-60)/50,dy=(t.clientY-r.top-60)/50;const l=Math.hypot(dx,dy);if(l>1){dx/=l;dy/=l}joy={x:dx,y:dy};K.style.left=40+dx*40+'px';K.style.top=40+dy*40+'px'},{passive:false});
+J.addEventListener('touchend',()=>{joy={x:0,y:0};K.style.left=K.style.top='40px'});
+cv.addEventListener('touchstart',e=>{const t=e.changedTouches[0];look={id:t.identifier,x:t.clientX,y:t.clientY};const now=Date.now();if(now-lastTap<300)teleportAt(t.clientX,t.clientY);lastTap=now},{passive:true});
+cv.addEventListener('touchmove',e=>{for(const t of e.changedTouches) if(look&&t.identifier===look.id){yaw-=(t.clientX-look.x)*0.005;pitch=Math.max(-1.4,Math.min(1.4,pitch-(t.clientY-look.y)*0.005));look.x=t.clientX;look.y=t.clientY}},{passive:true});
+addEventListener('resize',()=>{C.aspect=innerWidth/innerHeight;C.updateProjectionMatrix();R.setSize(innerWidth,innerHeight)});
+const RN=document.getElementById('room'); function roomAt(){const x=P.x,y=-P.z;let best='Garden';
+  for(const r of rooms){} return best}
+let clock=new THREE.Clock();
+const rects=[["Front garden / gate",0,-3,25,5]];
+fetch('rooms_rects.json').then(r=>r.json()).then(a=>rects.unshift(...a)).catch(()=>{});
+function where(){const x=P.x,y=-P.z;for(const r of rects){if(x>=r[1]&&x<=r[3]&&y>=r[2]&&y<=r[4])return r[0]} return y>34?'Pool terrace / garden':'Garden'}
+function loop(){requestAnimationFrame(loop); const dt=Math.min(clock.getDelta(),0.05);
+  let f=(keys.KeyW||keys.ArrowUp?1:0)-(keys.KeyS||keys.ArrowDown?1:0)-joy.y, s=(keys.KeyD||keys.ArrowRight?1:0)-(keys.KeyA||keys.ArrowLeft?1:0)+joy.x;
+  const sp=(keys.ShiftLeft?4.5:2.2)*dt;
+  const fw=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw)), rt=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+  const mv=fw.multiplyScalar(f).add(rt.multiplyScalar(s)); if(mv.lengthSq()>1) mv.normalize(); mv.multiplyScalar(sp);
+  for(const ax of ['x','z']){ const d=new THREE.Vector3(); d[ax]=mv[ax]; const L=Math.abs(d[ax]); if(L<1e-6) continue; d.normalize();
+    if(!blocked(P,d,L)){ const np=P.clone(); np[ax]+=mv[ax]; const g=ground(np); if(g===null||g<feet+0.45){P[ax]=np[ax]; if(g!==null) feet+= (g-feet)*Math.min(1,dt*12)} } }
+  if(birds){C.position.set(12.5,42,14);C.lookAt(12.5,0,-20)} else {C.position.set(P.x,feet+eye,P.z); C.rotation.set(pitch,yaw,0,'YXZ')}
+  RN.textContent=where(); R.render(S,C)}
+loop();
+</script></body></html>
