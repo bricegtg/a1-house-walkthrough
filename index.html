@@ -9,7 +9,7 @@
 #plan img{max-width:100%;max-height:100%}
 #joy{position:fixed;left:24px;bottom:50px;width:120px;height:120px;border-radius:50%;background:#fff3;border:2px solid #fff8;z-index:6;display:none;touch-action:none}
 #knob{position:absolute;left:40px;top:40px;width:40px;height:40px;border-radius:50%;background:#fffc}
-#room{position:fixed;top:8px;right:8px;background:#000a;color:#fff;padding:6px 10px;border-radius:8px;font-size:13px;z-index:5}
+#room{position:fixed;top:52px;left:8px;pointer-events:none;background:#000a;color:#fff;padding:6px 10px;border-radius:8px;font-size:13px;z-index:5}
 </style></head><body>
 <div id="load">Loading house model…</div>
 <div id="ui"><select id="tp"><option value="">Go to room…</option></select><button id="pb">Floor plan</button><button id="fly">Bird's-eye</button></div>
@@ -32,7 +32,7 @@ const sun=new THREE.DirectionalLight(0xfff0dd,2.2); sun.position.set(-25,30,20);
 Object.assign(sun.shadow.camera,{left:-35,right:35,top:35,bottom:-35,far:120}); sun.target.position.set(12,0,-20); S.add(sun,sun.target);
 const solids=[], floors=[]; let yaw=0,pitch=0; const P=new THREE.Vector3(12.5,0,1.5); let eye=1.6, feet=0;
 const b2t=(x,y)=>new THREE.Vector3(x,0,-y);
-new GLTFLoader().load('house.glb',g=>{
+function loadHouse(){new GLTFLoader().load('house.glb',g=>{
   g.scene.traverse(o=>{ if(!o.isMesh) return; const n=(o.name+' '+(o.parent?o.parent.name:''));
     o.castShadow=o.receiveShadow=true;
     if(/INV_/.test(n)){o.visible=false; solids.push(o); return;}
@@ -40,7 +40,7 @@ new GLTFLoader().load('house.glb',g=>{
     if(o.material&&o.material.name==='glass'){o.material.transparent=true;o.material.opacity=0.22;o.material.depthWrite=false;o.castShadow=false}
     else floors.push(o);
   });
-  S.add(g.scene); document.getElementById('load').remove(); spawn(12.5,-2.5,0); });
+  S.add(g.scene); document.getElementById('load').remove(); spawn(12.5,-2.5,0); });}
 const rooms=await (await fetch('rooms.json')).json(); const tp=document.getElementById('tp');
 rooms.forEach((r,i)=>{const o=document.createElement('option');o.value=i;o.textContent=r.name;tp.appendChild(o)});
 function spawn(x,y,yw){P.copy(b2t(x,y)); P.y=5; feet=ground(P)??0; yaw=yw; pitch=0; birds=false}
@@ -79,5 +79,5 @@ function loop(){requestAnimationFrame(loop); const dt=Math.min(clock.getDelta(),
     if(!blocked(P,d,L)){ const np=P.clone(); np[ax]+=mv[ax]; const g=ground(np); if(g===null||g<feet+0.45){P[ax]=np[ax]; if(g!==null) feet+= (g-feet)*Math.min(1,dt*12)} } }
   if(birds){C.position.set(12.5,42,14);C.lookAt(12.5,0,-20)} else {C.position.set(P.x,feet+eye,P.z); C.rotation.set(pitch,yaw,0,'YXZ')}
   RN.textContent=where(); R.render(S,C)}
-loop();
+loop(); loadHouse();
 </script></body></html>
